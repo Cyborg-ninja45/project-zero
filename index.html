@@ -1,0 +1,828 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROJECT: ZERO — Escape Protocol</title>
+<style>
+:root {
+  --bg:#070b10; --panel:#101923; --panel2:#172630;
+  --cyan:#62eaff; --gold:#ffd27a; --red:#ff596c;
+  --green:#73e9b0; --text:#e6f1f7; --muted:#92a8b5;
+  --line:#304451;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; min-height:100vh; background:var(--bg); color:var(--text);
+  font-family:Arial,Helvetica,sans-serif;
+}
+button,input { font:inherit; }
+button {
+  cursor:pointer; color:var(--text); background:#172833;
+  border:1px solid #426071; padding:12px 14px; transition:.15s;
+}
+button:hover { background:#234353; border-color:var(--cyan); }
+button:focus-visible,input:focus-visible { outline:2px solid var(--cyan); outline-offset:2px; }
+.primary { background:var(--cyan); color:#061014; border:0; font-weight:bold; }
+.primary:hover { background:#249db5; color:white; }
+.danger { color:#ff9ba8; border-color:#8b3545; }
+.hidden { display:none!important; }
+.start-screen {
+  min-height:100vh; display:flex; align-items:center; justify-content:center;
+  padding:22px;
+  background:radial-gradient(ellipse at center,#17313d,#0a1119 55%,#05080c);
+}
+.start-card {
+  width:min(760px,100%); padding:clamp(24px,6vw,58px);
+  border:1px solid #34505f; background:#060c12ee;
+  box-shadow:0 0 70px #173c4a44;
+}
+.eyebrow { color:var(--cyan); letter-spacing:4px; font-size:12px; font-weight:bold; }
+h1 { font-size:clamp(44px,9vw,86px); line-height:.95; letter-spacing:-3px; margin:20px 0 8px; }
+h1 span { color:var(--cyan); }
+.subtitle { color:var(--gold); letter-spacing:4px; font-size:13px; margin-bottom:28px; }
+.description { max-width:570px; color:#b4c5ce; line-height:1.8; }
+.warning { border-left:3px solid var(--red); background:#32161e66; padding:12px 15px; margin:24px 0; color:#ffb6c0; font-size:13px; line-height:1.7; }
+.start-card .primary { width:100%; padding:17px; margin-top:10px; }
+.topbar {
+  display:flex; align-items:center; justify-content:space-between; gap:14px;
+  flex-wrap:wrap; padding:15px 22px; background:#0c131b; border-bottom:1px solid var(--line);
+}
+.brand { font-weight:bold; letter-spacing:2px; }
+.brand span { color:var(--cyan); }
+.status-row { display:flex; gap:18px; flex-wrap:wrap; font-size:12px; color:var(--muted); }
+.status-row strong { color:var(--cyan); margin-left:4px; }
+.layout { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:15px; padding:15px; max-width:1500px; margin:auto; }
+.room {
+  position:relative; overflow:hidden; min-height:570px; border:1px solid #344c5a;
+  background:radial-gradient(ellipse at 50% 40%,#263e49,#14242f 44%,#0a1119 80%);
+}
+.room:before {
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent 0,transparent 4px,#0000000a 5px,transparent 6px);
+}
+.room-heading { position:relative; display:flex; justify-content:space-between; gap:10px; padding:17px; color:var(--muted); font-size:11px; letter-spacing:2px; }
+.lamp { width:9px;height:9px;display:inline-block;border-radius:50%;background:var(--red);box-shadow:0 0 12px var(--red);margin-right:7px; }
+.lamp.on { background:var(--green);box-shadow:0 0 12px var(--green); }
+.room-center { position:relative; min-height:430px; display:flex; align-items:center; justify-content:center; padding:35px 12px 75px; }
+.door {
+  position:relative; width:min(250px,55%); height:325px; border:8px solid #263b47;
+  background:linear-gradient(90deg,#15232d,#253742,#111d26);
+  box-shadow:0 0 35px #0008,inset 0 0 25px #0008;
+  display:flex; align-items:center; justify-content:center;
+}
+.door:before { content:""; position:absolute; inset:10px; border:1px solid #48606b; pointer-events:none; }
+.door-label { position:absolute; top:22px; color:#7d9ba8; font-size:10px; letter-spacing:2px; }
+.door-lock { width:42px;height:65px;border:2px solid #4a606c;background:#091016;display:grid;place-items:center;color:var(--red);font-size:24px; }
+.door-lock.unlocked { color:var(--green);border-color:var(--green); }
+.door-handle { position:absolute;right:20px;top:53%;width:8px;height:48px;background:#71838b; }
+.object {
+  position:absolute; z-index:2; min-width:90px; padding:12px 8px;
+  border:1px solid #4b7786; background:#0a1822ef; color:var(--cyan);
+  text-align:center; box-shadow:0 0 18px #0006;
+}
+.object .symbol { display:block;font-size:24px;margin-bottom:6px; }
+.object small { display:block;color:#9db0bb;margin-top:5px;font-size:9px;letter-spacing:1px; }
+.obj-samples { left:3%;top:28%; }
+.obj-mirror { right:3%;top:28%; }
+.obj-terminal { left:4%;bottom:7%; }
+.obj-power { right:4%;bottom:7%; }
+.obj-memory { left:50%;transform:translateX(-50%);bottom:2%; }
+.room-footer { position:relative;padding:13px 17px;background:#080e14cc;border-top:1px solid #2c424e;color:#91a8b5;font-size:11px; }
+.side { display:flex;flex-direction:column;gap:13px; }
+.panel { padding:16px;background:var(--panel);border:1px solid var(--line); }
+.panel h2 { margin:0 0 13px;color:var(--cyan);font-size:12px;letter-spacing:2px; }
+.panel p { color:#a9bbc5;line-height:1.65;font-size:13px; }
+.objectives { margin:0;padding-left:18px;color:#b6c5cc;font-size:13px;line-height:2; }
+.objectives li.done { color:var(--green); }
+.notebook { display:flex;flex-direction:column;gap:8px; }
+.clue { background:#14232e;border-left:2px solid var(--gold);padding:9px;font-size:12px;line-height:1.6; }
+.clue strong { display:block;color:var(--gold);margin-bottom:3px; }
+.log { max-height:170px;overflow-y:auto;font-family:monospace;font-size:11px;line-height:1.8;color:#9cb2be; }
+.log div { border-bottom:1px solid #263944;padding:3px 0; }
+.panel-button { width:100%;margin-top:7px; }
+.backdrop { position:fixed;z-index:10;inset:0;background:#000b;display:flex;align-items:center;justify-content:center;padding:17px; }
+.modal { width:min(580px,100%);max-height:90vh;overflow-y:auto;background:#0b141d;border:1px solid #497080;box-shadow:0 0 60px #000c;padding:24px; }
+.modal h2 { color:var(--cyan);letter-spacing:2px;font-size:19px;margin-top:0; }
+.modal p { color:#bdcbd2;line-height:1.7;font-size:14px; }
+.modal-actions { display:flex;gap:9px;flex-wrap:wrap;margin-top:20px; }
+.modal-actions button { flex:1; }
+.code-input { width:100%;background:#050a0e;border:1px solid #527080;color:var(--cyan);font-size:25px;letter-spacing:5px;padding:14px;text-align:center;margin:12px 0; }
+.sample-grid { display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin:15px 0; }
+.sample { padding:13px;background:#12222c;border:1px solid #314d5c; }
+.sample strong { color:var(--gold);display:block;margin-bottom:7px; }
+.sample span { color:#b4c5ce;font-size:12px; }
+.puzzle-buttons { display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin:15px 0; }
+.puzzle-buttons button { min-height:52px; }
+.puzzle-buttons button.selected { background:#255064;border-color:var(--cyan); }
+.puzzle-buttons button.correct { background:#164332;border-color:var(--green); }
+.puzzle-buttons button.wrong { background:#481d27;border-color:var(--red); }
+#notice { color:var(--gold);min-height:22px;font-size:12px;margin-top:12px; }
+.mini-screen { background:#050b10;border:1px solid #2c4957;padding:18px;text-align:center;margin:15px 0; }
+.sequence-display { font-size:26px;letter-spacing:8px;color:var(--gold);min-height:36px; }
+.progress { color:var(--muted);font-size:12px; }
+.ending { text-align:center;padding:20px 5px; }
+.ending .big { font-size:60px;margin:15px; }
+@media(max-width:850px) {
+  .layout { grid-template-columns:1fr; }
+  .room { min-height:510px; }
+  .room-center { min-height:375px; }
+  .door { height:260px;width:195px; }
+  .obj-samples { left:1%;top:24%; }
+  .obj-mirror { right:1%;top:24%; }
+  .obj-terminal { left:1%;bottom:7%; }
+  .obj-power { right:1%;bottom:7%; }
+  .object { min-width:76px;font-size:11px;padding:9px 5px; }
+}
+@media(max-width:430px) {
+  .topbar { padding:12px; }
+  .status-row { gap:9px; }
+  .layout { padding:8px; }
+  .room-center { min-height:340px; }
+  .door { height:225px;width:145px; }
+  .object .symbol { font-size:20px; }
+  .obj-memory { bottom:0; }
+  .sample-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<section id="startScreen" class="start-screen">
+  <div class="start-card">
+    <div class="eyebrow">RESTRICTED FACILITY // LEVEL 07</div>
+    <h1>PROJECT:<br><span>ZERO</span></h1>
+    <div class="subtitle">ESCAPE PROTOCOL // RANDOMIZED BUILD</div>
+    <p class="description">
+      You are trapped in a research chamber after a containment failure.
+      The emergency exit is locked, the terminal is offline, and the facility
+      archive has been scrambled.
+    </p>
+    <p class="description">
+      Search the room, solve the puzzles, record the clues, and escape before
+      the ten-minute lockdown timer expires.
+    </p>
+    <div class="warning">
+      WARNING: Puzzle answers are generated for each mission. The next run
+      will use different codes, sample times, symbols, and memory sequences.
+    </div>
+    <button id="startButton" class="primary" type="button">INITIALIZE MISSION →</button>
+    <p style="font-size:11px;color:#627987;margin-top:18px">SIMULATION BUILD 8.00 // OFFLINE ACCESS</p>
+  </div>
+</section>
+
+<section id="gameScreen" class="hidden">
+  <header class="topbar">
+    <div class="brand">PROJECT <span>ZERO</span></div>
+    <div class="status-row">
+      <div>FACILITY <strong>07</strong></div>
+      <div>STATUS <strong id="statusText">LOCKED</strong></div>
+      <div>TIME <strong id="timer">10:00</strong></div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="room">
+      <div class="room-heading">
+        <span><span id="powerLamp" class="lamp"></span>CONTAINMENT CHAMBER</span>
+        <span>CAM 07-A // LIVE</span>
+      </div>
+      <div class="room-center">
+        <button class="object obj-samples" id="samplesButton" type="button">
+          <span class="symbol">▤</span>SPECIMENS<small>LAB RECORDS</small>
+        </button>
+        <button class="object obj-mirror" id="mirrorButton" type="button">
+          <span class="symbol">◇</span>MIRROR<small>WALL PANEL</small>
+        </button>
+        <div class="door" id="door">
+          <div class="door-label">EMERGENCY EXIT</div>
+          <div id="doorLock" class="door-lock">×</div>
+          <div class="door-handle"></div>
+        </div>
+        <button class="object obj-terminal" id="terminalButton" type="button">
+          <span class="symbol">▣</span>TERMINAL<small>DATA ACCESS</small>
+        </button>
+        <button class="object obj-power" id="powerButton" type="button">
+          <span class="symbol">ϟ</span>POWER GRID<small>ROUTE CONTROL</small>
+        </button>
+        <button class="object obj-memory" id="memoryButton" type="button">
+          <span class="symbol">◉</span>MEMORY CORE<small>SEQUENCE TEST</small>
+        </button>
+      </div>
+      <div class="room-footer">
+        LOCATION: RESEARCH WING / CHAMBER 07
+        <span style="float:right">TEMP: 18°C</span>
+      </div>
+    </section>
+
+    <aside class="side">
+      <section class="panel">
+        <h2>MISSION OBJECTIVES</h2>
+        <ul class="objectives">
+          <li id="o1">Inspect specimen records</li>
+          <li id="o2">Decode the mirror</li>
+          <li id="o3">Restore terminal access</li>
+          <li id="o4">Route power correctly</li>
+          <li id="o5">Pass the memory test</li>
+          <li id="o6">Unlock the exit</li>
+        </ul>
+      </section>
+      <section class="panel">
+        <h2>FIELD NOTEBOOK</h2>
+        <div id="notebook" class="notebook"><p>No evidence collected yet.</p></div>
+      </section>
+      <section class="panel">
+        <h2>FACILITY LOG</h2>
+        <div id="log" class="log"><div>Awaiting mission initialization...</div></div>
+      </section>
+      <section class="panel">
+        <h2>SYSTEM CONTROLS</h2>
+        <button id="hintButton" class="panel-button" type="button">REQUEST HINT</button>
+        <button id="restartButton" class="panel-button danger" type="button">RESTART MISSION</button>
+      </section>
+    </aside>
+  </main>
+</section>
+
+<div id="backdrop" class="backdrop hidden">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h2 id="modalTitle">SYSTEM</h2>
+    <div id="modalContent"></div>
+    <div id="modalActions" class="modal-actions"></div>
+    <div id="notice" role="status"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+const SYMBOLS = ["▲","◆","●","■","★","✚","⬟","✦"];
+const COLORS = [
+  {name:"CYAN", hex:"#62eaff"},
+  {name:"AMBER", hex:"#ffd27a"},
+  {name:"VIOLET", hex:"#c5a0ff"},
+  {name:"GREEN", hex:"#73e9b0"}
+];
+
+const state = {
+  started:false, finished:false, remaining:600, timerId:null,
+  samplesSeen:false, mirrorSolved:false, terminalRestored:false,
+  powerSolved:false, memorySolved:false, doorUnlocked:false,
+  samples:[], sampleAnswer:"", mirrorNumber:"", mirrorAnswer:"",
+  powerOrder:[], powerSelection:[], memorySequence:[], memoryInput:[],
+  hints:0, clues:[], wrong:0
+};
+
+function randInt(min,max) {
+  return Math.floor(Math.random() * (max-min+1)) + min;
+}
+
+function shuffle(array) {
+  const a = [...array];
+  for(let i=a.length-1;i>0;i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function formatTime(n) {
+  n = Math.max(0,n);
+  return String(Math.floor(n/60)).padStart(2,"0") + ":" +
+         String(n%60).padStart(2,"0");
+}
+
+function logEvent(message) {
+  const entry = document.createElement("div");
+  entry.textContent = "["+formatTime(state.remaining)+"] "+message;
+  $("log").prepend(entry);
+}
+
+function addClue(title,description) {
+  if(state.clues.some(c=>c.title===title)) return;
+  state.clues.push({title,description});
+  renderNotebook();
+  logEvent("Evidence recorded: "+title);
+}
+
+function renderNotebook() {
+  const box = $("notebook");
+  box.replaceChildren();
+  if(!state.clues.length) {
+    const p=document.createElement("p");
+    p.textContent="No evidence collected yet.";
+    box.append(p);
+    return;
+  }
+  for(const clue of state.clues) {
+    const div=document.createElement("div");
+    div.className="clue";
+    const strong=document.createElement("strong");
+    strong.textContent=clue.title;
+    const span=document.createElement("span");
+    span.textContent=clue.description;
+    div.append(strong,span);
+    box.append(div);
+  }
+}
+
+function updateUI() {
+  $("timer").textContent=formatTime(state.remaining);
+  $("timer").classList.toggle("time-low",state.remaining<=60);
+  $("statusText").textContent=state.doorUnlocked?"EXIT OPEN":
+    state.terminalRestored?"SYSTEM ONLINE":"LOCKED";
+  $("powerLamp").classList.toggle("on",state.powerSolved);
+  $("doorLock").classList.toggle("unlocked",state.doorUnlocked);
+  $("doorLock").textContent=state.doorUnlocked?"✓":"×";
+
+  const checks=[
+    state.samplesSeen,state.mirrorSolved,state.terminalRestored,
+    state.powerSolved,state.memorySolved,state.doorUnlocked
+  ];
+  checks.forEach((done,i)=>$("o"+(i+1)).classList.toggle("done",done));
+}
+
+function openModal(title,html,actions) {
+  $("modalTitle").textContent=title;
+  $("modalContent").innerHTML=html;
+  $("modalActions").replaceChildren();
+  $("notice").textContent="";
+  for(const action of actions) {
+    const button=document.createElement("button");
+    button.textContent=action.label;
+    if(action.primary) button.classList.add("primary");
+    if(action.danger) button.classList.add("danger");
+    button.addEventListener("click",action.run);
+    $("modalActions").append(button);
+  }
+  $("backdrop").classList.remove("hidden");
+}
+
+function closeModal() {
+  $("backdrop").classList.add("hidden");
+}
+
+function notice(message) {
+  $("notice").textContent=message;
+}
+
+function generateMission() {
+  // Generate four unique sample times and shuffle their displayed order.
+  const minutes=shuffle([randInt(0,12),randInt(13,25),randInt(26,38),randInt(39,51)]);
+  const labels=shuffle(["A","B","C","D"]);
+  state.samples=labels.map((label,i)=>({label,time:minutes[i]*7+randInt(0,5)}));
+  state.samples.sort(()=>Math.random()-.5);
+
+  const chronological=[...state.samples].sort((a,b)=>a.time-b.time);
+  state.sampleAnswer=chronological.map(s=>s.label).join("");
+
+  // A randomized three-digit number for the mirror cipher.
+  state.mirrorNumber=String(randInt(123,987));
+  while(new Set(state.mirrorNumber).size<3) state.mirrorNumber=String(randInt(123,987));
+  state.mirrorAnswer=state.mirrorNumber.split("").reverse().join("");
+
+  // A shuffled colour-routing order. The clue reveals the required order,
+  // while the user must click the coloured switches in that order.
+  state.powerOrder=shuffle([...COLORS]);
+
+  // A fresh four-symbol memory sequence.
+  state.memorySequence=[];
+  for(let i=0;i<5;i++) state.memorySequence.push(SYMBOLS[randInt(0,7)]);
+  state.memoryInput=[];
+
+  // The final code combines the reversed mirror digits and a random digit.
+  state.finalDigit=randInt(1,9);
+  state.finalCode=state.mirrorAnswer+String(state.finalDigit);
+}
+
+function startGame() {
+  if(state.started) return;
+  state.started=true;
+  generateMission();
+
+  $("startScreen").classList.add("hidden");
+  $("gameScreen").classList.remove("hidden");
+
+  logEvent("Mission initialized. Randomized protocol generated.");
+  logEvent("Objective received: escape before lockdown.");
+  addClue("RECOVERY PROTOCOL","Sort the specimen records from earliest recovery to latest.");
+  addClue("MIRROR PROTOCOL","Reverse the digits shown on the mirror.");
+  addClue("FINAL OVERRIDE","The final code combines the reversed mirror code with the digit found in the terminal archive.");
+  updateUI();
+  state.timerId=setInterval(tick,1000);
+}
+
+function tick() {
+  if(!state.started||state.finished) return;
+  state.remaining--;
+  updateUI();
+  if(state.remaining===120) logEvent("WARNING: Two minutes remaining.");
+  if(state.remaining<=0) finishGame(false);
+}
+
+function inspectSamples() {
+  state.samplesSeen=true;
+  const sorted=[...state.samples].sort((a,b)=>a.time-b.time);
+  const sampleHTML=state.samples.map(s=>
+    `<div class="sample"><strong>SPECIMEN ${s.label}</strong><span>Recovery time: ${String(Math.floor(s.time/4)).padStart(2,"0")}:${String((s.time*3)%60).padStart(2,"0")}</span></div>`
+  ).join("");
+
+  openModal("SPECIMEN RECOVERY RECORDS",`
+    <p>Four specimen containers were recovered during the incident. The
+    archive requires the specimen labels in chronological recovery order.</p>
+    <div class="sample-grid">${sampleHTML}</div>
+    <p><strong>Research note:</strong> Enter the labels from earliest to latest.
+    The order changes with each mission.</p>
+    <input id="sampleInput" class="code-input" maxlength="4"
+      autocomplete="off" placeholder="ABCD" aria-label="Specimen order">
+  `,[
+    {label:"Submit Order",primary:true,run:checkSamples},
+    {label:"Record Times",run:()=>{
+      const desc=state.samples.map(s=>{
+        const mins=Math.floor(s.time/4);
+        const secs=(s.time*3)%60;
+        return s.label+" "+String(mins).padStart(2,"0")+":"+String(secs).padStart(2,"0");
+      }).join("; ");
+      addClue("SPECIMEN TIMES",desc);
+      notice("All recorded times added to your notebook.");
+    }},
+    {label:"Close",run:closeModal}
+  ]);
+  updateUI();
+  setTimeout(()=>$("sampleInput")?.focus(),0);
+}
+
+function checkSamples() {
+  const value=$("sampleInput")?.value.trim().toUpperCase()||"";
+  if(value===state.sampleAnswer) {
+    addClue("SPECIMEN ORDER", "Correct chronological sequence: "+state.sampleAnswer+".");
+    logEvent("Specimen sequence accepted.");
+    closeModal();
+    openModal("SPECIMEN ORDER VERIFIED",`
+      <p style="color:var(--green)">SEQUENCE ACCEPTED.</p>
+      <p>The sample records are synchronized. The terminal can now accept the specimen order.</p>
+    `,[{label:"Continue",primary:true,run:closeModal}]);
+  } else {
+    state.wrong++;
+    notice("Incorrect order. Sort by recovery time, not by label.");
+  }
+}
+
+function inspectMirror() {
+  openModal("REFLECTIVE WALL PANEL",`
+    <p>A sequence is etched into the mirror's inner surface. A note below it says:</p>
+    <div class="mini-screen">
+      <div class="eyebrow">REFLECTIVE CACHE</div>
+      <div class="sequence-display" style="margin:15px 0">${state.mirrorNumber.split("").join(" ")}</div>
+      <div class="progress">THE MIRROR READS BACKWARDS</div>
+    </div>
+    <p>Enter the three digits in the order they would appear when read in reverse.</p>
+    <input id="mirrorInput" class="code-input" maxlength="3"
+      inputmode="numeric" autocomplete="off" placeholder="---">
+  `,[
+    {label:"Decode",primary:true,run:checkMirror},
+    {label:"Close",run:closeModal}
+  ]);
+  setTimeout(()=>$("mirrorInput")?.focus(),0);
+}
+
+function checkMirror() {
+  const value=$("mirrorInput")?.value.trim()||"";
+  if(value===state.mirrorAnswer) {
+    state.mirrorSolved=true;
+    addClue("MIRROR DECODED","The reversed mirror code is "+state.mirrorAnswer+".");
+    logEvent("Mirror cipher solved.");
+    updateUI();
+    openModal("CIPHER DECODED",`
+      <p style="color:var(--green)">CIPHER ACCEPTED.</p>
+      <p>The reversed code is ${state.mirrorAnswer}. The final override still requires one more digit from the terminal archive.</p>
+    `,[{label:"Continue",primary:true,run:closeModal}]);
+  } else {
+    state.wrong++;
+    notice("Incorrect cipher. Reverse the three digits.");
+  }
+}
+
+function inspectTerminal() {
+  if(!state.samplesSeen) {
+    openModal("RESEARCH TERMINAL",`
+      <p>The terminal requires a specimen audit before granting access.</p>
+      <p>Inspect the specimen records and solve their chronological order first.</p>
+    `,[{label:"Understood",primary:true,run:closeModal}]);
+    return;
+  }
+
+  openModal("RESEARCH TERMINAL",`
+    <p>Enter the specimen labels from earliest to latest recovery time.</p>
+    <p>The terminal's archive also contains the extra digit needed for the final override.</p>
+    <input id="terminalInput" class="code-input" maxlength="4"
+      autocomplete="off" placeholder="----" aria-label="Terminal sequence">
+  `,[
+    {label:"Authenticate",primary:true,run:checkTerminal},
+    {label:"Close",run:closeModal}
+  ]);
+  setTimeout(()=>$("terminalInput")?.focus(),0);
+}
+
+function checkTerminal() {
+  const value=$("terminalInput")?.value.trim().toUpperCase()||"";
+  if(value===state.sampleAnswer) {
+    state.terminalRestored=true;
+    const last=state.sampleAnswer[state.sampleAnswer.length-1];
+    addClue("ARCHIVE RESTORED","The terminal confirms the specimen order. Final archive digit: "+state.finalDigit+".");
+    addClue("FINAL ARCHIVE DIGIT","Use "+state.finalDigit+" as the final digit after the reversed mirror code.");
+    logEvent("Terminal access granted.");
+    updateUI();
+    openModal("RESEARCH ARCHIVE RESTORED",`
+      <p style="color:var(--green)">ACCESS GRANTED.</p>
+      <p>The archive has supplied the missing final digit: <strong style="color:var(--gold)">${state.finalDigit}</strong>.</p>
+      <p>The final security code consists of the reversed mirror sequence followed by that digit.</p>
+    `,[{label:"Continue",primary:true,run:closeModal}]);
+  } else {
+    state.wrong++;
+    notice("ACCESS DENIED. Check the specimen order in your notebook.");
+  }
+}
+
+function inspectPower() {
+  if(!state.terminalRestored) {
+    openModal("POWER ROUTING GRID",`
+      <p>The routing controls are protected. Restore terminal access before attempting to route power.</p>
+    `,[{label:"Close",primary:true,run:closeModal}]);
+    return;
+  }
+  if(state.powerSolved) {
+    openModal("POWER ROUTING GRID",`
+      <p style="color:var(--green)">ALL ROUTES STABLE.</p>
+      <p>Power has been restored to the security system.</p>
+    `,[{label:"Close",primary:true,run:closeModal}]);
+    return;
+  }
+
+  const shuffled=shuffle([...COLORS]);
+  state.powerSelection=[];
+  openModal("POWER ROUTING GRID",`
+    <p>Route power through the nodes in the exact sequence displayed by the archive.</p>
+    <div class="mini-screen">
+      <div class="eyebrow">REQUIRED ROUTE</div>
+      <div style="display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin-top:15px">
+        ${state.powerOrder.map((c,i)=>`<span style="color:${c.hex};border:1px solid ${c.hex};padding:9px 11px">${i+1}. ${c.name}</span>`).join("")}
+      </div>
+    </div>
+    <p>Click the four nodes in the required order. Your selected path appears below.</p>
+    <div class="puzzle-buttons">
+      ${shuffled.map(c=>`<button type="button" data-color="${c.name}" style="border-color:${c.hex};color:${c.hex}">${c.name}</button>`).join("")}
+    </div>
+    <p id="routeProgress" class="progress">Selected: none</p>
+  `,[
+    {label:"Reset Route",run:()=>{state.powerSelection=[];closeModal();inspectPower();}},
+    {label:"Close",run:closeModal}
+  ]);
+
+  $("modalContent").querySelectorAll("[data-color]").forEach(button=>{
+    button.addEventListener("click",()=>{
+      const name=button.dataset.color;
+      if(state.powerSelection.includes(name)) return;
+      state.powerSelection.push(name);
+      button.classList.add("selected");
+      $("routeProgress").textContent="Selected: "+state.powerSelection.join(" → ");
+
+      const index=state.powerSelection.length-1;
+      if(name!==state.powerOrder[index].name) {
+        state.wrong++;
+        notice("WRONG NODE. Reset the route and try again.");
+        state.powerSelection=[];
+        $("modalContent").querySelectorAll("[data-color]").forEach(b=>b.classList.remove("selected"));
+        $("routeProgress").textContent="Selected: none";
+        return;
+      }
+      if(state.powerSelection.length===state.powerOrder.length) {
+        state.powerSolved=true;
+        addClue("POWER GRID STABLE","The routing sequence was completed successfully.");
+        logEvent("Power grid stabilized.");
+        updateUI();
+        openModal("POWER RESTORED",`
+          <p style="color:var(--green)">ROUTE STABLE.</p>
+          <p>The security system is receiving power again. The memory core is ready for its diagnostic test.</p>
+        `,[{label:"Continue",primary:true,run:closeModal}]);
+      } else {
+        notice("Node accepted. Continue the sequence.");
+      }
+    });
+  });
+}
+
+function inspectMemory() {
+  if(!state.powerSolved) {
+    openModal("MEMORY CORE",`
+      <p>The memory core is offline. Restore the power grid first.</p>
+    `,[{label:"Close",primary:true,run:closeModal}]);
+    return;
+  }
+  if(state.memorySolved) {
+    openModal("MEMORY CORE",`
+      <p style="color:var(--green)">DIAGNOSTIC PASSED.</p>
+      <p>The memory core has released its security clearance.</p>
+    `,[{label:"Close",primary:true,run:closeModal}]);
+    return;
+  }
+
+  state.memoryInput=[];
+  openModal("MEMORY SEQUENCE TEST",`
+    <p>Memorize the five symbols displayed on the screen. After they disappear,
+    repeat the sequence by clicking the symbols in the same order.</p>
+    <div class="mini-screen">
+      <div id="sequenceDisplay" class="sequence-display">PREPARING...</div>
+      <div id="sequenceStatus" class="progress">Memorize the sequence</div>
+    </div>
+    <div class="puzzle-buttons">
+      ${SYMBOLS.slice(0,4).map((s,i)=>`<button type="button" data-symbol="${s}">${s}</button>`).join("")}
+    </div>
+    <p id="memoryProgress" class="progress">Sequence: 0 / 5</p>
+  `,[{label:"Close",run:closeModal}]);
+
+  const display=$("sequenceDisplay");
+  const status=$("sequenceStatus");
+  const buttons=$("modalContent").querySelectorAll("[data-symbol]");
+  // Ensure every symbol in the generated sequence is available as a button.
+  const available=shuffle([...SYMBOLS]).slice(0,4);
+  // Build a sequence using exactly the available buttons, guaranteeing a fair test.
+  state.memoryButtons=available;
+  state.memorySequence=Array.from({length:5},()=>available[randInt(0,available.length-1)]);
+  buttons.forEach((b,i)=>{
+    if(i<available.length) {
+      b.dataset.symbol=available[i];
+      b.textContent=available[i];
+    }
+  });
+
+  display.textContent=state.memorySequence.join(" ");
+  status.textContent="Memorize...";
+  buttons.forEach(b=>b.disabled=true);
+
+  setTimeout(()=>{
+    if($("backdrop").classList.contains("hidden")) return;
+    display.textContent="? ? ? ? ?";
+    status.textContent="Repeat the sequence";
+    buttons.forEach(b=>{
+      b.disabled=false;
+      b.addEventListener("click",()=>memoryPick(b.dataset.symbol));
+    });
+  },2800);
+}
+
+function memoryPick(symbol) {
+  if(state.memorySolved) return;
+  const expected=state.memorySequence[state.memoryInput.length];
+  if(symbol!==expected) {
+    state.wrong++;
+    state.memoryInput=[];
+    $("memoryProgress").textContent="Incorrect. Sequence reset: 0 / 5";
+    notice("Incorrect symbol. Try the sequence again.");
+    return;
+  }
+
+  state.memoryInput.push(symbol);
+  $("memoryProgress").textContent="Sequence: "+state.memoryInput.length+" / "+state.memorySequence.length;
+
+  if(state.memoryInput.length===state.memorySequence.length) {
+    state.memorySolved=true;
+    addClue("MEMORY CORE CLEARED","Diagnostic sequence accepted. Security clearance granted.");
+    logEvent("Memory test passed.");
+    updateUI();
+    openModal("MEMORY CORE CLEARED",`
+      <p style="color:var(--green)">DIAGNOSTIC PASSED.</p>
+      <p>The final security panel has been authorized. Combine the reversed mirror code with the digit from the terminal archive.</p>
+    `,[{label:"Continue",primary:true,run:closeModal}]);
+  }
+}
+
+function inspectDoor() {
+  if(state.doorUnlocked) {
+    finishGame(true);
+    return;
+  }
+
+  const missing=[];
+  if(!state.terminalRestored) missing.push("restore the research terminal");
+  if(!state.mirrorSolved) missing.push("decode the mirror cipher");
+  if(!state.powerSolved) missing.push("stabilize the power grid");
+  if(!state.memorySolved) missing.push("pass the memory-core test");
+
+  if(missing.length) {
+    openModal("EMERGENCY EXIT",`
+      <p>The exit's magnetic lock remains engaged.</p>
+      <p>Outstanding requirements:</p>
+      <ul>${missing.map(x=>`<li>${x}</li>`).join("")}</ul>
+    `,[{label:"Close",primary:true,run:closeModal}]);
+    return;
+  }
+
+  openModal("FINAL SECURITY OVERRIDE",`
+    <p>All subsystem checks have passed.</p>
+    <p>Enter the three reversed mirror digits followed by the final digit from the terminal archive.</p>
+    <input id="finalInput" class="code-input" maxlength="4" inputmode="numeric"
+      autocomplete="off" placeholder="----" aria-label="Final security code">
+  `,[
+    {label:"Unlock Exit",primary:true,run:checkFinal},
+    {label:"Close",run:closeModal}
+  ]);
+  setTimeout(()=>$("finalInput")?.focus(),0);
+}
+
+function checkFinal() {
+  const value=$("finalInput")?.value.trim()||"";
+  if(value===state.finalCode) {
+    state.doorUnlocked=true;
+    updateUI();
+    logEvent("Final override accepted. Exit unlocked.");
+    openModal("SECURITY DISENGAGED",`
+      <p style="color:var(--green)">OVERRIDE ACCEPTED.</p>
+      <p>The magnetic locks disengage. The emergency exit is open.</p>
+    `,[{label:"Escape",primary:true,run:()=>finishGame(true)}]);
+  } else {
+    state.wrong++;
+    notice("INVALID CODE. Recheck the mirror and archive clues.");
+  }
+}
+
+function requestHint() {
+  state.hints++;
+  let hint;
+
+  if(!state.samplesSeen) {
+    hint="Inspect the specimen records. Sort their times from earliest to latest.";
+  } else if(!state.terminalRestored) {
+    hint="Use the specimen order as the terminal password. The notebook can store the sample times.";
+  } else if(!state.mirrorSolved) {
+    hint="The mirror puzzle asks you to reverse the three digits shown on its panel.";
+  } else if(!state.powerSolved) {
+    hint="Follow the four-colour route shown by the power-grid archive, clicking nodes in order.";
+  } else if(!state.memorySolved) {
+    hint="Watch the five-symbol sequence carefully, then repeat it by clicking the matching symbols.";
+  } else if(!state.doorUnlocked) {
+    hint="The final code is the reversed mirror number followed by the final digit in the terminal archive.";
+  } else {
+    hint="The exit is unlocked. Click the door to complete the mission.";
+  }
+
+  openModal("FIELD ASSISTANCE",`<p>${hint}</p>`,[
+    {label:"Understood",primary:true,run:closeModal}
+  ]);
+}
+
+function finishGame(success) {
+  if(state.finished) return;
+  state.finished=true;
+  clearInterval(state.timerId);
+
+  openModal(success?"MISSION COMPLETE":"CONTAINMENT LOCKDOWN",`
+    <div class="ending">
+      <div class="big" style="color:${success?"var(--green)":"var(--red)"}">${success?"✓":"!"}</div>
+      <h2>${success?"ESCAPE SUCCESSFUL":"TIME EXPIRED"}</h2>
+      <p>${success
+        ?"You solved the randomized research puzzles, restored the facility systems, and unlocked the exit."
+        :"The lockdown completed before you escaped. Review the clues and try a new randomized run."}</p>
+      <p style="color:var(--gold)">TIME REMAINING: ${formatTime(state.remaining)}</p>
+      <p style="color:${success?"var(--green)":"var(--red)"}">${success?"ENDING A — THE ESCAPE":"ENDING B — LOCKDOWN"}</p>
+    </div>
+  `,[{label:"NEW RANDOMIZED MISSION",primary:true,run:restartGame}]);
+
+  $("statusText").textContent=success?"MISSION COMPLETE":"LOCKDOWN";
+  logEvent(success?"Mission complete.":"Mission failed. Time expired.");
+}
+
+function restartGame() {
+  clearInterval(state.timerId);
+  // Reloading creates a fresh mission when Initialize Mission is clicked.
+  location.reload();
+}
+
+$("startButton").addEventListener("click",startGame);
+$("samplesButton").addEventListener("click",inspectSamples);
+$("mirrorButton").addEventListener("click",inspectMirror);
+$("terminalButton").addEventListener("click",inspectTerminal);
+$("powerButton").addEventListener("click",inspectPower);
+$("memoryButton").addEventListener("click",inspectMemory);
+$("door").addEventListener("click",inspectDoor);
+$("hintButton").addEventListener("click",requestHint);
+$("restartButton").addEventListener("click",restartGame);
+
+$("backdrop").addEventListener("click",e=>{
+  if(e.target===$("backdrop")&&!state.finished) closeModal();
+});
+
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"&&!state.finished) closeModal();
+  if(e.key==="Enter") {
+    if($("sampleInput")===document.activeElement) checkSamples();
+    if($("mirrorInput")===document.activeElement) checkMirror();
+    if($("terminalInput")===document.activeElement) checkTerminal();
+    if($("finalInput")===document.activeElement) checkFinal();
+  }
+});
+</script>
+</body>
+</html>
